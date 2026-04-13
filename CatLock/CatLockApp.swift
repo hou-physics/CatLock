@@ -3,20 +3,25 @@ import SwiftUI
 @main
 struct CatLockApp: App {
     @StateObject private var lockManager = LockManager.shared
+    @StateObject private var settings = SettingsManager.shared
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        // Main window — shown on launch, closing it hides to background
-        Window("CatLock", id: "main") {
-            MainWindowView(lockManager: lockManager)
+        Window(String(localized: "app_name"), id: "main") {
+            MainWindowView(lockManager: lockManager, settings: settings)
         }
-        .defaultSize(width: 300, height: 200)
+        .defaultSize(width: 320, height: 340)
 
-        // Menu bar icon
+        Window(String(localized: "settings_title"), id: "settings") {
+            SettingsView()
+        }
+        .defaultSize(width: 400, height: 280)
+        .windowResizability(.contentSize)
+
         MenuBarExtra {
-            MenuBarMenu(lockManager: lockManager)
+            MenuBarMenu(lockManager: lockManager, settings: settings)
         } label: {
-            Image(systemName: lockManager.isLocked ? "lock.fill" : "lock.open.fill")
+            Image(systemName: lockManager.isLocked ? "cat.fill" : "cat")
         }
     }
 }
@@ -27,13 +32,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        // Clean up BEFORE windows start closing — this prevents the event tap
-        // from blocking the termination sequence and causing a spinning cursor.
         LockManager.shared.prepareForTermination()
         return .terminateNow
     }
 
-    // Closing the window should not quit the app
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }
@@ -43,35 +45,65 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 struct MainWindowView: View {
     @ObservedObject var lockManager: LockManager
+    @ObservedObject var settings: SettingsManager
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "lock.shield")
-                .font(.system(size: 48))
-                .foregroundColor(.accentColor)
+        VStack(spacing: 20) {
+            // Cat icon
+            Image(systemName: "cat.fill")
+                .font(.system(size: 56))
+                .foregroundColor(.terracotta)
+                .padding(.top, 8)
 
-            Text("CatLock")
-                .font(.title)
-                .bold()
+            // App name
+            Text(String(localized: "app_name"))
+                .font(.system(.title, design: .serif))
+                .fontWeight(.medium)
+                .foregroundColor(.nearBlack)
 
+            // Lock button
             Button(action: { lockManager.lock() }) {
-                Text("锁定键盘")
-                    .frame(width: 120)
+                HStack(spacing: 8) {
+                    Image(systemName: "lock.fill")
+                    Text(String(localized: "main_lock_button"))
+                }
+                .frame(width: 160)
+                .padding(.vertical, 4)
             }
             .controlSize(.large)
+            .buttonStyle(.borderedProminent)
+            .tint(.terracotta)
             .disabled(lockManager.isLocked || !lockManager.hasAccessibility)
 
+            // Permission warning
             if !lockManager.hasAccessibility {
-                Text("请先授权辅助功能权限")
+                Text(String(localized: "main_permission_warning"))
                     .font(.caption)
                     .foregroundColor(.red)
             }
 
-            Text("⌃⌥⌘L 快捷键锁定/解锁")
+            // Shortcut hint
+            Text(String(localized: "main_shortcut_hint \(settings.shortcutSymbolString())"))
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.stoneGray)
+
+            Spacer().frame(height: 4)
+
+            // Settings button
+            Button(action: { openWindow(id: "settings") }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "gearshape")
+                    Text(String(localized: "settings_title"))
+                }
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(.oliveGray)
+            .font(.callout)
         }
         .padding(30)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.parchment)
     }
 }
 
@@ -79,14 +111,16 @@ struct MainWindowView: View {
 
 struct MenuBarMenu: View {
     @ObservedObject var lockManager: LockManager
+    @ObservedObject var settings: SettingsManager
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         if lockManager.isLocked {
-            Button("解锁  ⌃⌥⌘L") {
+            Button(String(localized: "menu_unlock \(settings.shortcutSymbolString())")) {
                 lockManager.unlock()
             }
         } else {
-            Button("锁定  ⌃⌥⌘L") {
+            Button(String(localized: "menu_lock \(settings.shortcutSymbolString())")) {
                 lockManager.lock()
             }
             .disabled(!lockManager.hasAccessibility)
@@ -94,14 +128,21 @@ struct MenuBarMenu: View {
 
         if !lockManager.hasAccessibility {
             Divider()
-            Button("授权辅助功能权限...") {
+            Button(String(localized: "menu_grant_permission")) {
                 AccessibilityHelper.showPermissionAlert()
             }
         }
 
         Divider()
 
-        Button("退出 CatLock") {
+        Button(String(localized: "settings_title")) {
+            openWindow(id: "settings")
+            NSApp.activate(ignoringOtherApps: true)
+        }
+
+        Divider()
+
+        Button(String(localized: "menu_quit")) {
             LockManager.shared.prepareForTermination()
             NSApplication.shared.terminate(nil)
         }
