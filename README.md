@@ -2,26 +2,54 @@
 
 **English** | [中文](docs/README_zh.md) | [Deutsch](docs/README_de.md)
 
-A lightweight macOS menu bar app that locks your keyboard and mouse to prevent accidental input from cats, kids, or cleaning.
+A lightweight macOS menu bar app that locks your keyboard and mouse — because cats have opinions about your work.
 
-Press a customizable shortcut (default: `Cmd+Shift+L`) from any app to instantly lock all keyboard and mouse input. A fullscreen overlay appears with a single unlock button. Press the shortcut again or click the button to unlock. That's it.
+<p align="center">
+  <img src="docs/pics/main-interface.png" alt="CatLock main interface" width="280">
+</p>
+
+Press a customizable shortcut (default `Cmd+Shift+L`) from any app to instantly lock all input. A fullscreen overlay appears with a single unlock button. Press the shortcut again or click the button to unlock.
 
 ## Features
 
 - **Global hotkey** — Works from any app, even when CatLock is in the background
-- **Customizable shortcut** — Record any key combination in Settings
-- **Privacy mode** — Optional fully opaque overlay that hides your screen content
+- **Customizable shortcut** — Record any key combination you like
+- **Privacy mode** — Black out the entire screen while locked
 - **Menu bar app** — Lives in your menu bar, stays out of your way
 - **25 languages** — Auto-detects your system language
-- **Sleep prevention** — Keeps your Mac awake while locked so long-running tasks aren't interrupted
+- **Sleep prevention** — Keeps your Mac awake so long-running tasks aren't interrupted
+
+## Lock Mode
+
+When locked, a translucent overlay covers your screen. Your desktop stays visible, but all keyboard and mouse input is blocked.
+
+<p align="center">
+  <img src="docs/pics/normal-lock-mode.png" alt="Normal lock mode" width="600">
+</p>
+
+## Privacy Mode
+
+Need to step away? Turn on Privacy Mode in Settings — the overlay goes fully opaque, hiding everything on screen.
+
+<p align="center">
+  <img src="docs/pics/privacy-mode.png" alt="Privacy mode" width="600">
+</p>
+
+## Settings
+
+Customize your shortcut and toggle Privacy Mode from the Settings panel.
+
+<p align="center">
+  <img src="docs/pics/settings.png" alt="Settings" width="320">
+</p>
 
 ## Why CatLock?
 
-Your cat walks across the keyboard. Your toddler mashes keys while you step away. You're cleaning the keyboard and accidentally trigger shortcuts. CatLock solves all of these by intercepting input at the system level — no events reach any application while locked.
+Your cat walks across the keyboard. Your toddler discovers the delete key. You're wiping down the keyboard and accidentally trigger a shortcut that rearranges your desktop. CatLock intercepts all input at the system level — while locked, no events reach any application.
 
 ## How It Works
 
-CatLock uses macOS CGEvent taps to intercept keyboard and mouse events before they reach any application. A lightweight listen-only tap runs at all times to detect the shortcut. When locked, a second tap swallows all input except the unlock shortcut. This requires Accessibility permission, which CatLock will prompt you to grant on first use.
+CatLock uses macOS CGEvent taps to intercept keyboard and mouse events before they reach any application. A lightweight listen-only tap runs at all times to detect the shortcut. When locked, a second tap blocks all input except the unlock shortcut. This requires Accessibility permission, which CatLock will prompt you to grant on first use.
 
 ## Install
 
