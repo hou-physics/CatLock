@@ -50,4 +50,4 @@ The built app will be in `~/Library/Developer/Xcode/DerivedData/CatLock-*/Build/
 
 ## License
 
-MIT
+GPL-3.0

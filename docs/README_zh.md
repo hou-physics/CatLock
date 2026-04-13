@@ -50,4 +50,4 @@ xcodebuild -scheme CatLock -configuration Release build
 
 ## 许可证
 
-MIT
+GPL-3.0

@@ -50,4 +50,4 @@ Die erstellte App befindet sich in `~/Library/Developer/Xcode/DerivedData/CatLoc
 
 ## Lizenz
 
-MIT
+GPL-3.0
