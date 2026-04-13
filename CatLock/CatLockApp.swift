@@ -22,7 +22,6 @@ struct CatLockApp: App {
         Window(String(localized: "about_title"), id: "about") {
             AboutView()
         }
-        .defaultSize(width: 360, height: 380)
         .windowResizability(.contentSize)
         .windowStyle(.hiddenTitleBar)
 
@@ -219,14 +218,14 @@ struct AboutView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Drag area
-            Color.clear.frame(height: 12)
+            Color.clear.frame(height: 16)
 
             // App icon
             Image(systemName: "cat.fill")
-                .font(.system(size: 44))
+                .font(.system(size: 40))
                 .foregroundColor(.terracotta)
 
-            Spacer().frame(height: 12)
+            Spacer().frame(height: 10)
 
             // App name
             Text("CatLock")
@@ -240,33 +239,40 @@ struct AboutView: View {
                 .foregroundColor(.stoneGray)
                 .padding(.top, 2)
 
-            Spacer().frame(height: 24)
+            Spacer().frame(height: 28)
 
             // Quote
-            VStack(spacing: 8) {
+            VStack(alignment: .trailing, spacing: 6) {
                 Text(String(localized: "about_quote"))
-                    .font(.system(size: 13, design: .serif))
+                    .font(.system(size: 12.5, design: .serif))
                     .italic()
                     .foregroundColor(.oliveGray)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
 
-                Text(String(localized: "about_quote_source"))
-                    .font(.system(size: 11))
-                    .foregroundColor(.stoneGray)
+                // Source — right-aligned, book title italic
+                HStack(spacing: 0) {
+                    Spacer()
+                    Text(String(localized: "about_quote_source"))
+                        .font(.system(size: 11, design: .serif))
+                        .italic()
+                        .foregroundColor(.stoneGray)
+                }
             }
-            .padding(.horizontal, 30)
+            .padding(.horizontal, 28)
 
-            Spacer()
+            Spacer().frame(height: 28)
 
             // Copyright
             Text("\u{00A9} 2026 kvitroar. All rights reserved.")
                 .font(.system(size: 10))
                 .foregroundColor(.stoneGray)
-                .padding(.bottom, 16)
+
+            Spacer().frame(height: 16)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(width: 320)
         .background(Color.parchment)
     }
 }
