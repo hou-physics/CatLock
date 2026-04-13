@@ -247,10 +247,10 @@ struct AboutView: View {
                     .font(.system(size: 12.5, design: .serif))
                     .italic()
                     .foregroundColor(.oliveGray)
-                    .multilineTextAlignment(.center)
+                    .multilineTextAlignment(.leading)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 // Source — right-aligned, book title italic
                 HStack(spacing: 0) {
