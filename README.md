@@ -1,5 +1,7 @@
 # CatLock
 
+**English** | [中文](docs/README_zh.md) | [Deutsch](docs/README_de.md)
+
 A lightweight macOS menu bar app that locks your keyboard and mouse to prevent accidental input from cats, kids, or cleaning.
 
 Press a customizable shortcut (default: `Cmd+Shift+L`) from any app to instantly lock all keyboard and mouse input. A fullscreen overlay appears with a single unlock button. Press the shortcut again or click the button to unlock. That's it.
