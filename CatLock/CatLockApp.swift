@@ -242,24 +242,20 @@ struct AboutView: View {
             Spacer().frame(height: 28)
 
             // Quote
-            VStack(alignment: .trailing, spacing: 6) {
+            VStack(alignment: .trailing, spacing: 8) {
                 Text(String(localized: "about_quote"))
-                    .font(.system(size: 12.5, design: .serif))
-                    .italic()
+                    .font(.system(size: 12.5))
                     .foregroundColor(.oliveGray)
                     .multilineTextAlignment(.leading)
-                    .lineSpacing(4)
+                    .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Source — right-aligned, book title italic
-                HStack(spacing: 0) {
-                    Spacer()
-                    Text(String(localized: "about_quote_source"))
-                        .font(.system(size: 11, design: .serif))
-                        .italic()
-                        .foregroundColor(.stoneGray)
-                }
+                // Source — right-aligned
+                Text(String(localized: "about_quote_source"))
+                    .font(.system(size: 11))
+                    .foregroundColor(.stoneGray)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(.horizontal, 28)
 
