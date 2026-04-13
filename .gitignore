@@ -12,3 +12,4 @@ xcuserdata/
 
 # Docs (development only)
 docs/superpowers/
+.claude/
