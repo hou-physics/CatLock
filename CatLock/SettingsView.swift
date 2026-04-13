@@ -24,14 +24,15 @@ struct SettingsView: View {
                     // Shortcut display
                     Text(isRecording ? recordingText : settings.shortcutDisplayString())
                         .font(.system(.body, design: .monospaced))
+                        .foregroundColor(.nearBlack)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
                         .frame(minWidth: 140)
-                        .background(Color.ivory)
+                        .background(Color.white)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(isRecording ? Color.terracotta : Color.borderCream, lineWidth: 1)
+                                .stroke(isRecording ? Color.terracotta : Color.warmSand, lineWidth: 1.5)
                         )
 
                     // Record button
@@ -40,14 +41,18 @@ struct SettingsView: View {
                              ? String(localized: "shortcut_stop")
                              : String(localized: "shortcut_record"))
                             .frame(width: 70)
+                            .foregroundColor(.nearBlack)
                     }
                     .controlSize(.regular)
+                    .buttonStyle(.bordered)
 
                     // Reset button
                     Button(String(localized: "shortcut_reset")) {
                         settings.resetToDefaults()
                     }
                     .controlSize(.regular)
+                    .buttonStyle(.bordered)
+                    .foregroundColor(.nearBlack)
                 }
             }
 
@@ -60,10 +65,12 @@ struct SettingsView: View {
                         .font(.headline)
                         .foregroundColor(.nearBlack)
                 }
+                .toggleStyle(.switch)
+                .tint(.terracotta)
 
                 Text(String(localized: "privacy_description"))
                     .font(.caption)
-                    .foregroundColor(.stoneGray)
+                    .foregroundColor(.oliveGray)
             }
 
             Spacer()
