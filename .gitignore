@@ -1,0 +1,14 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcworkspacedata
+xcuserdata/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Docs (development only)
+docs/superpowers/
