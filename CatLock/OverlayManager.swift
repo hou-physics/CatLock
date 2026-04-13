@@ -4,7 +4,7 @@ import SwiftUI
 class OverlayManager {
 
     private var windows: [NSWindow] = []
-    var unlockButtonRects: [CGRect] = []
+    nonisolated(unsafe) var unlockButtonRects: [CGRect] = []
     var onUnlock: (() -> Void)?
 
     func showOverlays() {
