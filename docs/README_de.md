@@ -53,7 +53,7 @@ CatLock verwendet macOS CGEvent Taps, um Tastatur- und Mausereignisse abzufangen
 
 ## Installation
 
-1. Lade die neueste `.dmg`-Datei von [Releases](../../releases) herunter
+1. Lade die neueste `.dmg`-Datei von [Releases](https://github.com/hou-physics/CatLock/releases) herunter
 2. Öffne die `.dmg` und ziehe CatLock in den Programme-Ordner
 3. Öffne CatLock. macOS zeigt eine Warnung — klicke auf **Fertig** (nicht auf „In den Papierkorb legen")
 4. Gehe zu **Systemeinstellungen → Datenschutz & Sicherheit**, scrolle nach unten und klicke auf **Trotzdem öffnen**
