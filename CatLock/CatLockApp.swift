@@ -233,8 +233,8 @@ struct AboutView: View {
                 .fontWeight(.medium)
                 .foregroundColor(.nearBlack)
 
-            // Credit
-            Text("support @kvitroar")
+            // Credit — links to GitHub profile
+            Link("support @kvitroar", destination: URL(string: "https://github.com/hou-physics")!)
                 .font(.system(size: 11))
                 .foregroundColor(.stoneGray)
                 .padding(.top, 2)
