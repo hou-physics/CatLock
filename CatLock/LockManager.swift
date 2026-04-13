@@ -25,7 +25,9 @@ class LockManager: ObservableObject {
     private init() {
         hasAccessibility = AccessibilityHelper.checkPermission()
         overlayManager.onUnlock = { [weak self] in
-            self?.unlock()
+            DispatchQueue.main.async {
+                self?.unlock()
+            }
         }
         // Periodically re-check accessibility permission (user may grant it in System Settings)
         permissionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
@@ -200,15 +202,20 @@ private func eventTapCallback(
         return nil
     }
 
-    // Mouse click events
+    // Mouse click events — swallow ALL clicks, trigger unlock if in button area
     if type == .leftMouseDown || type == .leftMouseUp
         || type == .rightMouseDown || type == .rightMouseUp
         || type == .otherMouseDown || type == .otherMouseUp {
-        let location = event.location
-        if manager.isClickInsideUnlockButton(location) {
-            return Unmanaged.passUnretained(event)
+        // Only trigger unlock on mouseDown (not mouseUp) to avoid double-firing
+        if type == .leftMouseDown {
+            let location = event.location
+            if manager.isClickInsideUnlockButton(location) {
+                DispatchQueue.main.async {
+                    manager.unlock()
+                }
+            }
         }
-        return nil
+        return nil // swallow ALL mouse clicks
     }
 
     return Unmanaged.passUnretained(event)
