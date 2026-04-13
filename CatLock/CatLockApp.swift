@@ -244,7 +244,8 @@ struct AboutView: View {
             // Quote
             VStack(alignment: .trailing, spacing: 8) {
                 Text(String(localized: "about_quote"))
-                    .font(.system(size: 12.5))
+                    .font(.system(size: 12.5, design: .serif))
+                    .italic()
                     .foregroundColor(.oliveGray)
                     .multilineTextAlignment(.leading)
                     .lineSpacing(3)
@@ -253,7 +254,8 @@ struct AboutView: View {
 
                 // Source — right-aligned
                 Text(String(localized: "about_quote_source"))
-                    .font(.system(size: 11))
+                    .font(.system(size: 11, design: .serif))
+                    .italic()
                     .foregroundColor(.stoneGray)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
