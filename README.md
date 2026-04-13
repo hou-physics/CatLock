@@ -23,7 +23,13 @@ CatLock uses macOS CGEvent taps to intercept keyboard and mouse events before th
 
 ## Install
 
-Download the latest `.dmg` from [Releases](../../releases), open it, and drag CatLock to your Applications folder.
+1. Download the latest `.dmg` from [Releases](../../releases)
+2. Open the `.dmg` and drag CatLock to your Applications folder
+3. Open CatLock. macOS will show a warning — click **Done** (not "Move to Trash")
+4. Go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway**
+5. CatLock will ask for Accessibility permission — click the button to grant it in System Settings
+
+> **Why the warning?** CatLock is open-source and free. The warning appears because the app is not signed with a paid Apple Developer certificate ($99/year). The source code is fully available for review in this repository.
 
 ## Build from Source
 
