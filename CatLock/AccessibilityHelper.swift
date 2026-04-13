@@ -13,11 +13,11 @@ enum AccessibilityHelper {
 
     static func showPermissionAlert() {
         let alert = NSAlert()
-        alert.messageText = "CatLock 需要辅助功能权限"
-        alert.informativeText = "为了拦截键盘和鼠标输入，CatLock 需要辅助功能权限。请在系统设置中授权。"
+        alert.messageText = String(localized: "permission_alert_title")
+        alert.informativeText = String(localized: "permission_alert_body")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "打开系统设置")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: String(localized: "permission_alert_open"))
+        alert.addButton(withTitle: String(localized: "permission_alert_cancel"))
 
         if alert.runModal() == .alertFirstButtonReturn {
             openAccessibilitySettings()
