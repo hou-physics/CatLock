@@ -20,10 +20,20 @@ class LockManager: ObservableObject {
     private var localMonitor: Any?
     private var globalMonitor: Any?
 
+    private var permissionTimer: Timer?
+
     private init() {
         hasAccessibility = AccessibilityHelper.checkPermission()
         overlayManager.onUnlock = { [weak self] in
             self?.unlock()
+        }
+        // Periodically re-check accessibility permission (user may grant it in System Settings)
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            let granted = AccessibilityHelper.checkPermission()
+            if granted != self.hasAccessibility {
+                self.hasAccessibility = granted
+            }
         }
     }
 

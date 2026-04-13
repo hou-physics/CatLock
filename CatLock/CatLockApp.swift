@@ -6,6 +6,13 @@ struct CatLockApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
+        // Main window — shown on launch, closing it hides to background
+        Window("CatLock", id: "main") {
+            MainWindowView(lockManager: lockManager)
+        }
+        .defaultSize(width: 300, height: 200)
+
+        // Menu bar icon
         MenuBarExtra {
             MenuBarMenu(lockManager: lockManager)
         } label: {
@@ -22,27 +29,65 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         LockManager.shared.unlock()
     }
+
+    // Closing the window should not quit the app
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
+    }
 }
+
+// MARK: - Main Window
+
+struct MainWindowView: View {
+    @ObservedObject var lockManager: LockManager
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "lock.shield")
+                .font(.system(size: 48))
+                .foregroundColor(.accentColor)
+
+            Text("CatLock")
+                .font(.title)
+                .bold()
+
+            Button(action: { lockManager.lock() }) {
+                Text("锁定键盘")
+                    .frame(width: 120)
+            }
+            .controlSize(.large)
+            .disabled(lockManager.isLocked || !lockManager.hasAccessibility)
+
+            if !lockManager.hasAccessibility {
+                Text("请先授权辅助功能权限")
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+
+            Text("⌃⌥⌘L 快捷键锁定/解锁")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding(30)
+    }
+}
+
+// MARK: - Menu Bar Menu
 
 struct MenuBarMenu: View {
     @ObservedObject var lockManager: LockManager
 
     var body: some View {
         if lockManager.isLocked {
-            Button("解锁") {
+            Button("解锁  ⌃⌥⌘L") {
                 lockManager.unlock()
             }
         } else {
-            Button("锁定") {
+            Button("锁定  ⌃⌥⌘L") {
                 lockManager.lock()
             }
             .disabled(!lockManager.hasAccessibility)
         }
-
-        Divider()
-
-        Text("⌃⌥⌘L")
-            .foregroundColor(.secondary)
 
         if !lockManager.hasAccessibility {
             Divider()

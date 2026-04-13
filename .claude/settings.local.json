@@ -8,7 +8,9 @@
       "Bash(git -C /Users/hou.astro/Desktop/CatLock commit -m ':*)",
       "Bash(git:*)",
       "Bash(ls CatLock/*.swift)",
-      "Bash(xcodebuild -scheme CatLock -configuration Debug build)"
+      "Bash(xcodebuild -scheme CatLock -configuration Debug build)",
+      "Bash(ls:*)",
+      "Bash(xcodebuild clean:*)"
     ]
   }
 }
