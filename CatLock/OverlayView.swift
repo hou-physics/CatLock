@@ -3,28 +3,37 @@ import SwiftUI
 struct OverlayView: View {
     var onUnlock: () -> Void
     var onButtonFrameChange: (CGRect) -> Void
+    var isPrivacyMode: Bool
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.4)
+            // Background — full black in privacy mode, semi-transparent otherwise
+            Color.black.opacity(isPrivacyMode ? 1.0 : 0.4)
                 .ignoresSafeArea()
 
             VStack(spacing: 20) {
                 Spacer()
 
+                // Cat icon
+                Image(systemName: "cat.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.terracotta.opacity(0.8))
+                    .padding(.bottom, 10)
+
+                // Unlock button
                 Button(action: onUnlock) {
-                    VStack(spacing: 15) {
+                    VStack(spacing: 12) {
                         Image(systemName: "lock.open.fill")
-                            .font(.system(size: 50))
-                        Text("点击解锁")
-                            .font(.largeTitle)
-                            .bold()
+                            .font(.system(size: 40))
+                        Text(String(localized: "overlay_unlock"))
+                            .font(.system(.title2, design: .serif))
+                            .fontWeight(.medium)
                     }
-                    .padding(50)
-                    .background(Color.white)
-                    .foregroundColor(.black)
-                    .cornerRadius(30)
-                    .shadow(radius: 20)
+                    .padding(40)
+                    .background(Color.ivory)
+                    .foregroundColor(.nearBlack)
+                    .cornerRadius(20)
+                    .shadow(color: .black.opacity(0.15), radius: 20)
                 }
                 .buttonStyle(.plain)
                 .background(
@@ -40,18 +49,19 @@ struct OverlayView: View {
                     }
                 )
 
-                Spacer()
-
-                VStack(spacing: 8) {
-                    Text("系统将不会进入休眠，请确保任务运行期间电量充足。")
+                // Hints — directly below unlock button
+                VStack(spacing: 6) {
+                    Text(String(localized: "overlay_sleep_warning"))
                         .font(.callout)
                         .foregroundColor(.white.opacity(0.7))
 
-                    Text("按 Ctrl+Option+Command+L 解锁")
+                    Text(String(localized: "overlay_shortcut_hint \(SettingsManager.shared.shortcutDisplayString())"))
                         .font(.callout)
                         .foregroundColor(.white.opacity(0.5))
                 }
-                .padding(.bottom, 40)
+                .padding(.top, 16)
+
+                Spacer()
             }
         }
     }

@@ -31,7 +31,6 @@ class OverlayManager {
                     self?.onUnlock?()
                 },
                 onButtonFrameChange: { [weak self] localFrame in
-                    // Convert window-local frame to screen coordinates
                     let screenRect = CGRect(
                         x: screenOrigin.x + localFrame.origin.x,
                         y: screenOrigin.y + localFrame.origin.y,
@@ -39,7 +38,8 @@ class OverlayManager {
                         height: localFrame.height
                     )
                     self?.updateButtonRect(for: window, rect: screenRect)
-                }
+                },
+                isPrivacyMode: SettingsManager.shared.privacyMode
             )
             window.contentView = NSHostingView(rootView: overlayView)
             window.setFrame(screen.frame, display: true)
@@ -51,7 +51,10 @@ class OverlayManager {
 
     func hideOverlays() {
         for window in windows {
-            window.close()
+            // Use orderOut instead of close — close() triggers macOS
+            // key-window search which can deadlock with SwiftUI updates.
+            window.contentView = nil  // detach NSHostingView first
+            window.orderOut(nil)
         }
         windows.removeAll()
         unlockButtonRects.removeAll()
