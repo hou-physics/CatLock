@@ -10,15 +10,13 @@ class LockManager: ObservableObject {
 
     let overlayManager = OverlayManager()
 
-    // Event tap state — accessed from the C callback via Unmanaged pointer.
-    // These are only mutated on the main thread (lock/unlock), and read
-    // from the event tap callback. The callback runs on the main RunLoop
-    // (we add the source to CFRunLoopGetMain), so there is no data race.
-    nonisolated(unsafe) var eventTap: CFMachPort?
-    nonisolated(unsafe) var runLoopSource: CFRunLoopSource?
+    // Always-on shortcut tap (listenOnly) — detects shortcut in any app
+    nonisolated(unsafe) var shortcutTap: CFMachPort?
+    nonisolated(unsafe) var shortcutRunLoopSource: CFRunLoopSource?
 
-    private var localMonitor: Any?
-    private var globalMonitor: Any?
+    // Lock event tap (defaultTap) — swallows all input when locked
+    nonisolated(unsafe) var lockEventTap: CFMachPort?
+    nonisolated(unsafe) var lockRunLoopSource: CFRunLoopSource?
 
     private var permissionTimer: Timer?
 
@@ -29,7 +27,6 @@ class LockManager: ObservableObject {
                 self?.unlock()
             }
         }
-        // Periodically re-check accessibility permission (user may grant it in System Settings)
         permissionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             guard let self else { return }
             let granted = AccessibilityHelper.checkPermission()
@@ -39,40 +36,50 @@ class LockManager: ObservableObject {
         }
     }
 
-    // MARK: - Shortcut Monitors (for unlocked state)
+    // MARK: - Always-On Shortcut Tap
 
-    func setupShortcutMonitors() {
-        // Local: fires when CatLock itself is the active app
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if self?.isLockShortcut(event) == true {
-                self?.lock()
-                return nil
-            }
-            return event
-        }
+    func createShortcutTap() {
+        guard hasAccessibility else { return }
+        let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
+        let unmanagedSelf = Unmanaged.passUnretained(self).toOpaque()
 
-        // Global: fires when another app is active
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if self?.isLockShortcut(event) == true {
-                self?.lock()
-            }
-        }
+        shortcutTap = CGEvent.tapCreate(
+            tap: .cgSessionEventTap,
+            place: .headInsertEventTap,
+            options: .listenOnly,
+            eventsOfInterest: mask,
+            callback: shortcutTapCallback,
+            userInfo: unmanagedSelf
+        )
+
+        guard let tap = shortcutTap else { return }
+        shortcutRunLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+        CFRunLoopAddSource(CFRunLoopGetMain(), shortcutRunLoopSource, .commonModes)
+        CGEvent.tapEnable(tap: tap, enable: true)
     }
 
-    private func removeShortcutMonitors() {
-        if let monitor = localMonitor {
-            NSEvent.removeMonitor(monitor)
-            localMonitor = nil
+    private func destroyShortcutTap() {
+        if let tap = shortcutTap {
+            CGEvent.tapEnable(tap: tap, enable: false)
+            CFMachPortInvalidate(tap)
         }
-        if let monitor = globalMonitor {
-            NSEvent.removeMonitor(monitor)
-            globalMonitor = nil
+        if let source = shortcutRunLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
         }
+        shortcutTap = nil
+        shortcutRunLoopSource = nil
     }
 
-    private func isLockShortcut(_ event: NSEvent) -> Bool {
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        return flags == [.control, .option, .command] && event.keyCode == 37
+    // MARK: - Termination Cleanup
+
+    func prepareForTermination() {
+        destroyLockEventTap()
+        destroyShortcutTap()
+        permissionTimer?.invalidate()
+        permissionTimer = nil
+        isLocked = false
+        overlayManager.hideOverlays()
+        PowerManager.restoreSleep()
     }
 
     // MARK: - Lock / Unlock
@@ -86,7 +93,12 @@ class LockManager: ObservableObject {
             return
         }
 
-        guard createEventTap() else { return }
+        // Ensure shortcut tap is running (may not be if permission was just granted)
+        if shortcutTap == nil {
+            createShortcutTap()
+        }
+
+        guard createLockEventTap() else { return }
 
         overlayManager.showOverlays()
         PowerManager.disableSleep()
@@ -96,15 +108,18 @@ class LockManager: ObservableObject {
     func unlock() {
         guard isLocked else { return }
 
-        destroyEventTap()
-        overlayManager.hideOverlays()
+        destroyLockEventTap()
         PowerManager.restoreSleep()
         isLocked = false
+
+        DispatchQueue.main.async { [overlayManager] in
+            overlayManager.hideOverlays()
+        }
     }
 
-    // MARK: - Event Tap
+    // MARK: - Lock Event Tap
 
-    private func createEventTap() -> Bool {
+    private func createLockEventTap() -> Bool {
         let keyEvents = (1 << CGEventType.keyDown.rawValue)
             | (1 << CGEventType.keyUp.rawValue)
             | (1 << CGEventType.flagsChanged.rawValue)
@@ -118,34 +133,34 @@ class LockManager: ObservableObject {
 
         let unmanagedSelf = Unmanaged.passUnretained(self).toOpaque()
 
-        eventTap = CGEvent.tapCreate(
+        lockEventTap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
             options: .defaultTap,
             eventsOfInterest: mask,
-            callback: eventTapCallback,
+            callback: lockEventTapCallback,
             userInfo: unmanagedSelf
         )
 
-        guard let tap = eventTap else { return false }
+        guard let tap = lockEventTap else { return false }
 
-        runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
+        lockRunLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+        CFRunLoopAddSource(CFRunLoopGetMain(), lockRunLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
 
         return true
     }
 
-    private func destroyEventTap() {
-        if let tap = eventTap {
+    private func destroyLockEventTap() {
+        if let tap = lockEventTap {
             CGEvent.tapEnable(tap: tap, enable: false)
             CFMachPortInvalidate(tap)
         }
-        if let source = runLoopSource {
+        if let source = lockRunLoopSource {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
         }
-        eventTap = nil
-        runLoopSource = nil
+        lockEventTap = nil
+        lockRunLoopSource = nil
     }
 
     // MARK: - Hit Testing
@@ -163,9 +178,9 @@ class LockManager: ObservableObject {
     }
 }
 
-// MARK: - C Callback (free function)
+// MARK: - Shortcut Tap Callback (always-on, listenOnly)
 
-private func eventTapCallback(
+private func shortcutTapCallback(
     proxy: CGEventTapProxy,
     type: CGEventType,
     event: CGEvent,
@@ -174,39 +189,64 @@ private func eventTapCallback(
     guard let userInfo = userInfo else { return Unmanaged.passUnretained(event) }
     let manager = Unmanaged<LockManager>.fromOpaque(userInfo).takeUnretainedValue()
 
-    // Handle tap disabled by timeout — re-enable
     if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-        if let tap = manager.eventTap {
+        if let tap = manager.shortcutTap {
             CGEvent.tapEnable(tap: tap, enable: true)
         }
         return Unmanaged.passUnretained(event)
     }
 
-    // Keyboard events
-    if type == .keyDown || type == .keyUp || type == .flagsChanged {
-        if type == .keyDown {
-            let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-            let flags = event.flags
-            let hasControl = flags.contains(.maskControl)
-            let hasOption = flags.contains(.maskAlternate)
-            let hasCommand = flags.contains(.maskCommand)
-            let hasShift = flags.contains(.maskShift)
-
-            if hasControl && hasOption && hasCommand && !hasShift && keyCode == 37 {
-                DispatchQueue.main.async {
-                    manager.unlock()
-                }
-                return nil
+    if type == .keyDown && SettingsManager.shared.matchesCGEvent(event) {
+        DispatchQueue.main.async {
+            if manager.isLocked {
+                manager.unlock()
+            } else {
+                manager.lock()
             }
+        }
+    }
+
+    // listenOnly — always pass the event through
+    return Unmanaged.passUnretained(event)
+}
+
+// MARK: - Lock Event Tap Callback (active only when locked)
+
+private func lockEventTapCallback(
+    proxy: CGEventTapProxy,
+    type: CGEventType,
+    event: CGEvent,
+    userInfo: UnsafeMutableRawPointer?
+) -> Unmanaged<CGEvent>? {
+    guard let userInfo = userInfo else { return Unmanaged.passUnretained(event) }
+    let manager = Unmanaged<LockManager>.fromOpaque(userInfo).takeUnretainedValue()
+
+    if !manager.isLocked {
+        return Unmanaged.passUnretained(event)
+    }
+
+    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+        if let tap = manager.lockEventTap {
+            CGEvent.tapEnable(tap: tap, enable: true)
+        }
+        return Unmanaged.passUnretained(event)
+    }
+
+    // Keyboard events — swallow all except the unlock shortcut
+    if type == .keyDown || type == .keyUp || type == .flagsChanged {
+        if type == .keyDown && SettingsManager.shared.matchesCGEvent(event) {
+            DispatchQueue.main.async {
+                manager.unlock()
+            }
+            return nil
         }
         return nil
     }
 
-    // Mouse click events — swallow ALL clicks, trigger unlock if in button area
+    // Mouse events — swallow all, check unlock button on mouseDown
     if type == .leftMouseDown || type == .leftMouseUp
         || type == .rightMouseDown || type == .rightMouseUp
         || type == .otherMouseDown || type == .otherMouseUp {
-        // Only trigger unlock on mouseDown (not mouseUp) to avoid double-firing
         if type == .leftMouseDown {
             let location = event.location
             if manager.isClickInsideUnlockButton(location) {
@@ -215,7 +255,7 @@ private func eventTapCallback(
                 }
             }
         }
-        return nil // swallow ALL mouse clicks
+        return nil
     }
 
     return Unmanaged.passUnretained(event)

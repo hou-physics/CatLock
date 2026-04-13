@@ -23,11 +23,14 @@ struct CatLockApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        LockManager.shared.setupShortcutMonitors()
+        LockManager.shared.createShortcutTap()
     }
 
-    func applicationWillTerminate(_ notification: Notification) {
-        LockManager.shared.unlock()
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Clean up BEFORE windows start closing — this prevents the event tap
+        // from blocking the termination sequence and causing a spinning cursor.
+        LockManager.shared.prepareForTermination()
+        return .terminateNow
     }
 
     // Closing the window should not quit the app
@@ -99,6 +102,7 @@ struct MenuBarMenu: View {
         Divider()
 
         Button("退出 CatLock") {
+            LockManager.shared.prepareForTermination()
             NSApplication.shared.terminate(nil)
         }
     }
